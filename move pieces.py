@@ -53,36 +53,24 @@ board=[
 
 #create and setup board
 def drawboard():
-    x=0
-    y=0
+    x = 0
+    y = 0
     for i in range(8):
         for j in range(8):
-            if i%2!=j%2:
-                pygame.draw.rect(window,(0, 0,0),[x, y, 80, 80], 0)
-            x+=80
-        x=0
-        y+=80
-
-def gamepos():
-    x=0
-    y=0
-    for i in range(8):
-        for j in range(8):
-            if board[i][j]!="":
+            if i % 2 != j % 2:
+                pygame.draw.rect(window, (0, 0, 0), [x, y, 80, 80], 0)
+            if board[i][j] != "":
                 window.blit(board[i][j].image,(x+20,y+20))
-            x+=80
-        x=0
-        y+=80
-    
+            x += 80
+        x = 0
+        y += 80
+
 #updates to display the board and pieces
 drawboard()
-gamepos()
 pygame.display.update()
 
 #PHASE 2: move pieces with mouse
-#selected piece class
-
-# Get the row and column from mouse position
+#Get the row and column from mouse position
 def get_row_col_from_mouse_pos(pos):
     x, y = pos
     row = y // 80
@@ -91,39 +79,36 @@ def get_row_col_from_mouse_pos(pos):
 
 selected_piece = None
 
-# Move the piece to the selected position
+#Move the piece to the selected position
 def move_piece(row, col):
     global selected_piece
+    global turn
+    piece = board[selected_piece[0]][selected_piece[1]]
     if selected_piece:
-        piece = board[selected_piece[0]][selected_piece[1]]
         board[selected_piece[0]][selected_piece[1]] = ""
         board[row][col] = piece
         selected_piece = None
     window.fill((255, 255, 255))
     drawboard()
-    gamepos()
-    pygame.display.update()
-        
+    pygame.display.update()        
 
-# Handle mouse clicks
+#Handle mouse clicks
 def handle_mouse_click(row, col):
     global selected_piece
     piece = board[row][col]
-    if piece != "":
+    if piece != "" and selected_piece==None:
         selected_piece = (row, col)
     else:
         move_piece(row, col)
 
-
-
-# Main game loop
+#Main game loop
 gameOn = True
 while gameOn:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             gameOn = False
         elif event.type == pygame.MOUSEBUTTONDOWN:
-            if event.button == 1:  # Left mouse button
+            if event.button == 1:
                 pos = pygame.mouse.get_pos()
                 row, col = get_row_col_from_mouse_pos(pos)
                 handle_mouse_click(row, col)
