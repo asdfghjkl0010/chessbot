@@ -69,7 +69,298 @@ def drawboard():
 drawboard()
 pygame.display.update()
 
-#PHASE 2: move pieces with mouse
+
+
+
+
+
+
+#PHASE 2: code rules for pieces
+posmoves=[]
+enpassant=False
+castle=True
+def possible_moves(piece):
+    global posmoves
+    global enpassant
+    global castle
+    p = board[piece[0]][piece[1]]
+    color=p.color
+    #pawn rules NEED TO CODE ENPASSANT AND PROMOTION
+    if p.name=="p":
+        if p.color=="w":
+            if board[piece[0]-1][piece[1]]=="":
+                posmoves.append((piece[0]-1,piece[1]))
+                if piece[0]==6 and board[piece[0]-2][piece[1]]=="":
+                    posmoves.append((4,piece[1]))
+            if piece[1]==0:
+                if board[piece[0]-1][piece[1]+1]!="":
+                    posmoves.append((piece[0]-1,piece[1]+1))
+            elif piece[1]==7:
+                if board[piece[0]-1][piece[1]-1]!="":
+                    posmoves.append((piece[0]-1,piece[1]-1))
+            else:
+                if board[piece[0]-1][piece[1]+1]!="":
+                    posmoves.append((piece[0]-1,piece[1]+1))
+                if board[piece[0]-1][piece[1]-1]!="":
+                    posmoves.append((piece[0]-1,piece[1]-1))
+        elif p.color=="b":
+            if board[piece[0]+1][piece[1]]=="":
+                posmoves.append((piece[0]+1,piece[1]))
+                if piece[0]==1 and board[piece[0]+2][piece[1]]=="":
+                    posmoves.append((3,piece[1]))
+            if piece[1]==0:
+                if board[piece[0]+1][piece[1]+1]!="":
+                    posmoves.append((piece[0]+1,piece[1]+1))
+            elif piece[1]==7:
+                if board[piece[0]+1][piece[1]-1]!="":
+                    posmoves.append((piece[0]+1,piece[1]-11))
+            else:
+                if board[piece[0]+1][piece[1]+1]!="":
+                    posmoves.append((piece[0]+1,piece[1]+1))
+                if board[piece[0]+1][piece[1]-1]!="":
+                    posmoves.append((piece[0]+1,piece[1]-1))
+    #king rules NEED TO CODE CASTLING
+    elif p.name=="k":
+        if piece[0]!=7 and piece[1]!=7 and (board[piece[0]+1][piece[1]+1]=="" or board[piece[0]+1][piece[1]+1].color!=color):
+            posmoves.append((piece[0]+1,piece[1]+1))
+        if piece[1]!=7 and (board[piece[0]][piece[1]+1]=="" or board[piece[0]][piece[1]+1].color!=color):
+            posmoves.append((piece[0],piece[1]+1))
+        if piece[0]!=0 and piece[1]!=7 and (board[piece[0]-1][piece[1]+1]=="" or board[piece[0]-1][piece[1]+1].color!=color):
+            posmoves.append((piece[0]-1,piece[1]+1))
+        if piece[0]!=0 and (board[piece[0]-1][piece[1]]=="" or board[piece[0]-1][piece[1]].color!=color):
+            posmoves.append((piece[0]-1,piece[1]))
+        if piece[0]!=7 and (board[piece[0]+1][piece[1]]=="" or board[piece[0]+1][piece[1]].color!=color):
+            posmoves.append((piece[0]+1,piece[1]))
+        if piece[0]!=0 and piece[1]!=0 and (board[piece[0]-1][piece[1]-1]=="" or board[piece[0]-1][piece[1]-1].color!=color):
+            posmoves.append((piece[0]-1,piece[1]-1))
+        if piece[1]!=0 and (board[piece[0]][piece[1]-1]=="" or board[piece[0]][piece[1]-1].color!=color):
+            posmoves.append((piece[0],piece[1]-1))
+        if piece[1]!=0 and piece[0]!=7 and (board[piece[0]+1][piece[1]-1]=="" or board[piece[0]+1][piece[1]-1].color!=color):
+            posmoves.append((piece[0]+1,piece[1]-1))
+    #knight rules
+    elif p.name=="n":
+        if piece[0]>1 and piece[1]!=0 and (board[piece[0]-2][piece[1]-1]=="" or board[piece[0]-2][piece[1]-1].color!=color):
+            posmoves.append((piece[0]-2,piece[1]-1))   
+        if piece[0]>1 and piece[1]!=7 and (board[piece[0]-2][piece[1]+1]=="" or board[piece[0]-2][piece[1]+1].color!=color):
+            posmoves.append((piece[0]-2,piece[1]+1))
+        if piece[0]!=0 and piece[1]<6 and (board[piece[0]-1][piece[1]+2]=="" or board[piece[0]-1][piece[1]+2].color!=color):
+            posmoves.append((piece[0]-1,piece[1]+2))
+        if piece[0]!=7 and piece[1]<6 and (board[piece[0]+1][piece[1]+2]=="" or board[piece[0]+1][piece[1]+2].color!=color):
+            posmoves.append((piece[0]+1,piece[1]+2))
+        if piece[0]<6 and piece[1]!=7 and (board[piece[0]+2][piece[1]+1]=="" or board[piece[0]+2][piece[1]+1].color!=color):
+            posmoves.append((piece[0]+2,piece[1]+1))
+        if piece[0]<6 and piece[1]!=0 and (board[piece[0]+2][piece[1]-1]=="" or board[piece[0]+2][piece[1]-1].color!=color):
+            posmoves.append((piece[0]+2,piece[1]-1))
+        if piece[0]!=7 and piece[1]>1 and (board[piece[0]+1][piece[1]-2]=="" or board[piece[0]+1][piece[1]-2].color!=color):           
+            posmoves.append((piece[0]+1,piece[1]-2))
+        if piece[0]!=0 and piece[1]>1 and (board[piece[0]-1][piece[1]-2]=="" or board[piece[0]-1][piece[1]-2].color!=color):
+            posmoves.append((piece[0]-1,piece[1]-2))
+    #rook rules
+    elif p.name=="r":
+        i=piece[0]+1
+        while i<=7:
+            if board[i][piece[1]]=="":
+                posmoves.append((i,piece[1]))
+            elif board[i][piece[1]]!="":
+                if board[i][piece[1]].color==color:
+                    break
+                elif board[i][piece[1]].color!=color:
+                    posmoves.append((i,piece[1]))
+                    break
+            i+=1
+        i=piece[0]-1
+        while i>=0:
+            if board[i][piece[1]]=="":
+                posmoves.append((i,piece[1]))
+            elif board[i][piece[1]]!="":
+                if board[i][piece[1]].color==color:
+                    break
+                elif board[i][piece[1]].color!=color:
+                    posmoves.append((i,piece[1]))
+                    break
+            i-=1
+        i=piece[1]+1
+        while i<=7:
+            if board[piece[0]][i]=="":
+                posmoves.append((piece[0],i))
+            elif board[piece[0]][i]!="":
+                if board[piece[0]][i].color==color:
+                    break
+                elif board[piece[0]][i].color!=color:
+                    posmoves.append((piece[0],i))
+                    break
+            i+=1
+        i=piece[1]-1
+        while i>=0:
+            if board[piece[0]][i]=="":
+                posmoves.append((piece[0],i))
+            elif board[piece[0]][i]!="":
+                if board[piece[0]][i].color==color:
+                    break
+                elif board[piece[0]][i].color!=color:
+                    posmoves.append((piece[0],i))
+                    break
+            i-=1
+    #bishop rules
+    elif p.name=="b":
+        r=piece[0]+1
+        c=piece[1]+1
+        while r<=7 and c<=7:
+            if board[r][c]=="":
+                posmoves.append((r,c))
+            elif board[r][c]!="":
+                if board[r][c].color==color:
+                    break
+                elif board[r][c].color!=color:
+                    posmoves.append((r,c))
+                    break
+            r+=1
+            c+=1
+        r=piece[0]+1
+        c=piece[1]-1
+        while r<=7 and c>=0:
+            if board[r][c]=="":
+                posmoves.append((r,c))
+            elif board[r][c]!="":
+                if board[r][c].color==color:
+                    break
+                elif board[r][c].color!=color:
+                    posmoves.append((r,c))
+                    break
+            r+=1
+            c-=1
+        r=piece[0]-1
+        c=piece[1]+1
+        while r>=0 and c<=7:
+            if board[r][c]=="":
+                posmoves.append((r,c))
+            elif board[r][c]!="":
+                if board[r][c].color==color:
+                    break
+                elif board[r][c].color!=color:
+                    posmoves.append((r,c))
+                    break
+            r-=1
+            c+=1
+        r=piece[0]-1
+        c=piece[1]-1
+        while r>=0 and c>=0:
+            if board[r][c]=="":
+                posmoves.append((r,c))
+            elif board[r][c]!="":
+                if board[r][c].color==color:
+                    break
+                elif board[r][c].color!=color:
+                    posmoves.append((r,c))
+                    break
+            r-=1
+            c-=1
+    #queen rules    
+    elif p.name=="q":
+        i=piece[0]+1
+        while i<=7:
+            if board[i][piece[1]]=="":
+                posmoves.append((i,piece[1]))
+            elif board[i][piece[1]]!="":
+                if board[i][piece[1]].color==color:
+                    break
+                elif board[i][piece[1]].color!=color:
+                    posmoves.append((i,piece[1]))
+                    break
+            i+=1
+        i=piece[0]-1
+        while i>=0:
+            if board[i][piece[1]]=="":
+                posmoves.append((i,piece[1]))
+            elif board[i][piece[1]]!="":
+                if board[i][piece[1]].color==color:
+                    break
+                elif board[i][piece[1]].color!=color:
+                    posmoves.append((i,piece[1]))
+                    break
+            i-=1
+        i=piece[1]+1
+        while i<=7:
+            if board[piece[0]][i]=="":
+                posmoves.append((piece[0],i))
+            elif board[piece[0]][i]!="":
+                if board[piece[0]][i].color==color:
+                    break
+                elif board[piece[0]][i].color!=color:
+                    posmoves.append((piece[0],i))
+                    break
+            i+=1
+        i=piece[1]-1
+        while i>=0:
+            if board[piece[0]][i]=="":
+                posmoves.append((piece[0],i))
+            elif board[piece[0]][i]!="":
+                if board[piece[0]][i].color==color:
+                    break
+                elif board[piece[0]][i].color!=color:
+                    posmoves.append((piece[0],i))
+                    break
+            i-=1
+        r=piece[0]+1
+        c=piece[1]+1
+        while r<=7 and c<=7:
+            if board[r][c]=="":
+                posmoves.append((r,c))
+            elif board[r][c]!="":
+                if board[r][c].color==color:
+                    break
+                elif board[r][c].color!=color:
+                    posmoves.append((r,c))
+                    break
+            r+=1
+            c+=1
+        r=piece[0]+1
+        c=piece[1]-1
+        while r<=7 and c>=0:
+            if board[r][c]=="":
+                posmoves.append((r,c))
+            elif board[r][c]!="":
+                if board[r][c].color==color:
+                    break
+                elif board[r][c].color!=color:
+                    posmoves.append((r,c))
+                    break
+            r+=1
+            c-=1
+        r=piece[0]-1
+        c=piece[1]+1
+        while r>=0 and c<=7:
+            if board[r][c]=="":
+                posmoves.append((r,c))
+            elif board[r][c]!="":
+                if board[r][c].color==color:
+                    break
+                elif board[r][c].color!=color:
+                    posmoves.append((r,c))
+                    break
+            r-=1
+            c+=1
+        r=piece[0]-1
+        c=piece[1]-1
+        while r>=0 and c>=0:
+            if board[r][c]=="":
+                posmoves.append((r,c))
+            elif board[r][c]!="":
+                if board[r][c].color==color:
+                    break
+                elif board[r][c].color!=color:
+                    posmoves.append((r,c))
+                    break
+            r-=1
+            c-=1
+
+
+
+
+
+
+
+#PHASE 3: move pieces with mouse
 #Get the row and column from mouse position
 def get_row_col_from_mouse_pos(pos):
     x, y = pos
@@ -85,10 +376,15 @@ def move_piece(row, col):
     global turn
     piece = board[selected_piece[0]][selected_piece[1]]
     if selected_piece:
-        board[selected_piece[0]][selected_piece[1]] = ""
-        board[row][col] = piece
-        selected_piece = None
+        if (row,col) in posmoves:
+            board[selected_piece[0]][selected_piece[1]] = ""
+            board[row][col] = piece
+            selected_piece = None
+        else:
+            print("Illegal move")
+            selected_piece = None
     window.fill((255, 255, 255))
+    posmoves.clear()
     drawboard()
     pygame.display.update()        
 
@@ -98,6 +394,9 @@ def handle_mouse_click(row, col):
     piece = board[row][col]
     if piece != "" and selected_piece==None:
         selected_piece = (row, col)
+        possible_moves(selected_piece)
+    elif piece =="" and selected_piece==None:
+        posmoves.clear()
     else:
         move_piece(row, col)
 
