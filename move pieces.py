@@ -73,6 +73,7 @@ pygame.display.update()
 posmoves=[]
 enpassant=False
 castle=True
+#list of possible moves
 piece_moves = {
     'k': [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)],
     'n': [(-2, -1), (-2, 1), (-1, -2), (-1, 2), (1, -2), (1, 2), (2, -1), (2, 1)],
@@ -80,6 +81,7 @@ piece_moves = {
     'b': [(-1, -1), (-1, 1), (1, -1), (1, 1)],
     'q': [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1)]
 }
+#creates list of regular moves
 def possible_moves(piece):
     posmoves.clear()
     p = board[piece[0]][piece[1]]
@@ -111,7 +113,7 @@ def possible_moves(piece):
                     posmoves.append((piece[0]+1,piece[1]+1))
             elif piece[1]==7:
                 if board[piece[0]+1][piece[1]-1]!="":
-                    posmoves.append((piece[0]+1,piece[1]-11))
+                    posmoves.append((piece[0]+1,piece[1]-1))
             else:
                 if board[piece[0]+1][piece[1]+1]!="":
                     posmoves.append((piece[0]+1,piece[1]+1))
@@ -130,7 +132,93 @@ def possible_moves(piece):
                     break
                 r += dr
                 c += dc
+#create threats array
+threats = [[0 for _ in range(8)] for _ in range(8)]
+#creates list of possible threats
+def possible_threats():
+    global threats
+    threats = [[0 for _ in range(8)] for _ in range(8)]
+    for r in range(8):
+        for c in range(8):
+            if board[r][c]!='':
+                piece=board[r][c]
+                if piece.color!=turn:
+                    if piece.name=='p':
+                        if piece.color=='w':
+                            if c==0:
+                                threats[r-1][c+1]=1
+                            elif c==7:
+                                threats[r-1][c-1]=1
+                            else:
+                                threats[r-1][c+1]=1
+                                threats[r-1][c-1]=1
+                        elif piece.color=='b':
+                            if c==0:
+                                threats[r+1][c+1]=1
+                            elif c==7:
+                                threats[r+1][c-1]=1
+                            else:
+                                threats[r+1][c+1]=1
+                                threats[r+1][c-1]=1
+                    else:
+                        for dr, dc in piece_moves[piece.name]:
+                            r1 = r + dr
+                            c1 = c + dc
+                            if piece.name=='k' or piece.name=='n':
+                                if 0 <= r1 < 8 and 0 <= c1 < 8:
+                                   threats[r1][c1] = 1
+                            else:
+                                while 0 <= r1 < 8 and 0 <= c1 < 8:
+                                    if board[r1][c1]!='':
+                                        threats[r1][c1]=1
+                                        break
+                                    threats[r1][c1]=1
+                                    r1+=dr
+                                    c1+=dc
 
+                               
+    print(threats)
+#handles promotion
+def promotion(row,col):
+    promoting=True
+    piece = board[row][col]
+    # Create a menu for piece selection
+    if turn=="w":
+        options = [wq, wr, wn, wb]
+    elif turn=="b":
+        options = [bq, br, bn, bb]
+    selected_option = None
+    while promoting:
+        # Display the menu
+        window.fill((255, 255, 255))
+        drawboard()
+        for i, option in enumerate(options):
+            if turn=="w":
+                piece_image = options[i].image
+                piece_image = pygame.transform.scale(piece_image, (80, 80))
+                window.blit(piece_image, (col*80, i*80))
+            elif turn=="b":
+                piece_image = options[i].image
+                piece_image = pygame.transform.scale(piece_image, (80, 80))
+                window.blit(piece_image, (col*80, 560-i*80))
+        pygame.display.update()
+        # Wait for player input
+        for event in pygame.event.get():
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                pos = pygame.mouse.get_pos()
+                if col * 80 <= pos[0] < (col + 1) * 80:
+                    if turn=="w":
+                        r = pos[1] // 80
+                    elif turn=="b":
+                        r = 7 - pos[1] // 80
+                    if 0 <= r < len(options):
+                        selected_option = options[r]
+                        promoting = False
+    # Update the board with the selected piece
+    board[row][col] = selected_option
+    drawboard()
+    pygame.display.update()
+    
 #PHASE 3: move pieces with mouse
 #Get the row and column from mouse position
 def get_row_col_from_mouse_pos(pos):
@@ -150,17 +238,48 @@ def move_piece(row, col):
     piece = board[selected_piece[0]][selected_piece[1]]
     if selected_piece:
         if (row, col) in posmoves:
+            #for regular moves
+            temp=board[row][col]
             board[selected_piece[0]][selected_piece[1]] = ""
             board[row][col] = piece
+
+            
+            #find position of king
+            for i in range(8):
+                for j in range(8):
+                    if board[i][j]!="" and board[i][j].name=='k' and board[i][j].color==turn:
+                            kr=i
+                            kc=j
+            #check if legal
+            possible_threats()
+            if threats[kr][kc]==1:
+                board[selected_piece[0]][selected_piece[1]] = piece
+                board[row][col] = temp
+                print("king in check")
+                selected_piece=None
+            
+            #castling
+            #enpassant
+            
+            #promotion
+            if piece.name=="p" and piece.color=="w" and turn=="w" and row==0:
+                promotion(row,col)
+            if piece.name=="p" and piece.color=="b" and turn=="b" and row==7:
+                promotion(row,col)
+
+            #deals with turns
+            if selected_piece:
+                if turnnum%2==1:
+                    turn="b"
+                else:
+                    turn="w"
+                turnnum+=1
             selected_piece = None
-            if turnnum%2==1:
-                turn="b"
-            else:
-                turn="w"
-            turnnum+=1
         else:
+            #if illegal move
             print("Illegal move")
             selected_piece = None
+        #updates board
         window.fill((255, 255, 255))
         drawboard()
         pygame.display.update()       
