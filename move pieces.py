@@ -98,6 +98,9 @@ def possible_moves(piece):
                     posmoves.append((piece[0]-1,piece[1]+1))
                 if board[piece[0]-1][piece[1]-1]!="":
                     posmoves.append((piece[0]-1,piece[1]-1))
+            if enpassant_target:
+                if piece[0]==3 and abs(piece[1]-enpassant_target[1])==1:
+                    posmoves.append((enpassant_target[0]-1,enpassant_target[1]))   
         elif p.color=="b":
             if board[piece[0]+1][piece[1]]=="":
                 posmoves.append((piece[0]+1,piece[1]))
@@ -114,6 +117,9 @@ def possible_moves(piece):
                     posmoves.append((piece[0]+1,piece[1]+1))
                 if board[piece[0]+1][piece[1]-1]!="":
                     posmoves.append((piece[0]+1,piece[1]-1))
+            if enpassant_target:
+                if piece[0]==4 and abs(piece[1]-enpassant_target[1])==1:
+                    posmoves.append((enpassant_target[0]+1,enpassant_target[1]))             
     elif p.name=='k' or p.name=='n':
         for dr, dc in piece_moves[p.name]:
             r, c = piece[0] + dr, piece[1] + dc           
@@ -260,7 +266,7 @@ def castling():
         wkscastling=False
     if board[0][4]=='':
         bkscastling=False
-        bqscastling=False 
+        bqscastling=False
 #returns a list of all legal moves 
 def all_possible_moves():
     all_moves=[]
@@ -337,11 +343,14 @@ def get_row_col_from_mouse_pos(pos):
 selected_piece = None
 turn = 'w'
 turnnum=1
+enpassant_target=None
 #Move the piece to the selected position
-def move_piece(row, col):
+def move_piece(row, col, en_passant_capture=False):
     global selected_piece
     global turn
     global turnnum
+    global enpassant_target
+    enpassant=False
     piece = board[selected_piece[0]][selected_piece[1]]
     if selected_piece:
         if (row, col) in posmoves:
@@ -367,9 +376,7 @@ def move_piece(row, col):
                     board[0][4] = ""
                     board[0][2] = piece
                     board[0][0] = ""
-                    board[0][3] = br
-            #enpassant
-            
+                    board[0][3] = br 
             #for regular moves
             temp=board[row][col]
             board[selected_piece[0]][selected_piece[1]] = ""
@@ -379,6 +386,24 @@ def move_piece(row, col):
                 promotion(row,col)
             if piece.name=="p" and piece.color=="b" and turn=="b" and row==7:
                 promotion(row,col)
+            #enpassant
+            if piece.name=='p' and piece.color=='w' and (row+1,col)==enpassant_target:
+                enpassant=True
+                temp=board[row+1][col]
+                board[selected_piece[0]][selected_piece[1]] = ""
+                board[row+1][col] = ""
+                board[row][col] = piece
+            if piece.name=='p' and piece.color=='b' and (row-1,col)==enpassant_target:
+                enpassant=True
+                temp=board[row-1][col]
+                board[selected_piece[0]][selected_piece[1]] = ""
+                board[row-1][col] = ""
+                board[row][col] = piece
+            if piece.name == "p" and abs(selected_piece[0] - row) == 2:
+                enpassant_target = (row, col)
+                print(enpassant_target)
+            else:
+                enpassant_target = None
             #find position of king
             for i in range(8):
                 for j in range(8):
@@ -388,8 +413,17 @@ def move_piece(row, col):
             #check if legal move
             possible_threats()
             if threats[kr][kc]==1:
-                board[selected_piece[0]][selected_piece[1]] = piece
-                board[row][col] = temp
+                if enpassant and piece.color=='w':
+                    board[selected_piece[0]][selected_piece[1]] = piece
+                    board[row][col]=''
+                    board[row+1][col] = temp
+                elif enpassant and piece.color=='b':
+                    board[selected_piece[0]][selected_piece[1]] = piece
+                    board[row][col]=''
+                    board[row-1][col] = temp
+                else:
+                    board[selected_piece[0]][selected_piece[1]] = piece
+                    board[row][col] = temp
                 print("king in check")
                 selected_piece=None
             #deals with turns
