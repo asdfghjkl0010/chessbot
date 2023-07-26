@@ -3,7 +3,7 @@
 import pygame
 from pygame.locals import *
 pygame.init()
-window = pygame.display.set_mode((640, 640))
+window = pygame.display.set_mode((840, 640))
 window.fill((255, 255, 255))
 #create the pieces class
 class Piece:
@@ -216,6 +216,7 @@ def promotion(row,col):
     while promoting:
         # Display the menu
         window.fill((255, 255, 255))
+        draw_move()
         drawboard()
         for i, option in enumerate(options):
             if turn=="w":
@@ -241,6 +242,7 @@ def promotion(row,col):
                         promoting = False
     # Update the board with the selected piece
     board[row][col] = selected_option
+    board[selected_piece[0]][selected_piece[1]]=''
     drawboard()
     pygame.display.update()
 #handles castling
@@ -300,12 +302,8 @@ def all_possible_moves():
             board[all_moves[x][2]][all_moves[x][3]]=temp
     return all_moves
 gameover=False
-def show_checkmate_screen():
+def show_end_screen(string):
     global gameover
-    if turn=='w':
-        string="Checkmate! Black wins!"
-    else:
-        string='Checkmate! White Wins!'
     window.fill((255, 255, 255))
     font = pygame.font.Font(None, 64)
     text = font.render(string, True, (255, 0, 0))
@@ -314,24 +312,8 @@ def show_checkmate_screen():
     pygame.display.update()
     pygame.time.wait(10000)
     gameover=True
-def show_stalemate_screen():
-    window.fill((255, 255, 255))
-    font = pygame.font.Font(None, 64)
-    text = font.render("Stalemate!", True, (255, 0, 0))
-    text_rect = text.get_rect(center=(320, 320))
-    window.blit(text, text_rect)
-    pygame.display.update()
-    pygame.time.wait(10000)
-    gameover=True
-def show_draw_screen():
-    window.fill((255, 255, 255))
-    font = pygame.font.Font(None, 64)
-    text = font.render("Draw!", True, (255, 0, 0))
-    text_rect = text.get_rect(center=(320, 320))
-    window.blit(text, text_rect)
-    pygame.display.update()
-    pygame.time.wait(10000)
-    gameover=True
+
+
 
 #PHASE 3: move pieces with mouse
 #Get the row and column from mouse position
@@ -345,63 +327,84 @@ turn = 'w'
 turnnum=1
 enpassant_target=None
 #Move the piece to the selected position
-def move_piece(row, col, en_passant_capture=False):
+def move_piece(row, col):
     global selected_piece
     global turn
     global turnnum
     global enpassant_target
     enpassant=False
+    cap=False
+    pro=[False,'']
+    ksc=False
+    qsc=False
+    pos=selected_piece[1]
     piece = board[selected_piece[0]][selected_piece[1]]
     if selected_piece:
         if (row, col) in posmoves:
             #castling
-            if turn=='w' and piece.name=='k':
-                if row==7 and col==6:
-                    board[7][4] = ""
-                    board[7][6] = piece
-                    board[7][7] = ""
-                    board[7][5] = wr
-                elif row==7 and col==2:
-                    board[7][4] = ""
-                    board[7][2] = piece
-                    board[7][0] = ""
-                    board[7][3] = wr
-            elif turn=='b' and piece.name=='k':
-                if row==0 and col==6:
-                    board[0][4] = ""
-                    board[0][6] = piece
-                    board[0][7] = ""
-                    board[0][5] = br
-                elif row==0 and col==2:
-                    board[0][4] = ""
-                    board[0][2] = piece
-                    board[0][0] = ""
-                    board[0][3] = br 
-            #for regular moves
-            temp=board[row][col]
-            board[selected_piece[0]][selected_piece[1]] = ""
-            board[row][col] = piece
+            if turn=='w' and piece.name=='k' and row==7 and col==6:
+                board[7][4] = ""
+                board[7][6] = piece
+                board[7][7] = ""
+                board[7][5] = wr
+                ksc=True
+            elif turn=='w' and piece.name=='k' and row==7 and col==2:
+                board[7][4] = ""
+                board[7][2] = piece
+                board[7][0] = ""
+                board[7][3] = wr
+                qsc=True
+            elif turn=='b' and piece.name=='k' and row==0 and col==6:
+                board[0][4] = ""
+                board[0][6] = piece
+                board[0][7] = ""
+                board[0][5] = br
+                ksc=True
+            elif turn=='b' and piece.name=='k' and row==0 and col==2:
+                board[0][4] = ""
+                board[0][2] = piece
+                board[0][0] = ""
+                board[0][3] = br
+                qsc=True
             #promotion
-            if piece.name=="p" and piece.color=="w" and turn=="w" and row==0:
+            elif piece.name=="p" and piece.color=="w" and turn=="w" and row==0:
+                if board[row][col]!='':
+                    cap=True
                 promotion(row,col)
-            if piece.name=="p" and piece.color=="b" and turn=="b" and row==7:
+                pro=(True,board[row][col].name)
+            elif piece.name=="p" and piece.color=="b" and turn=="b" and row==7:
+                if board[row][col]!='':
+                    cap=True
                 promotion(row,col)
+                pro=(True,board[row][col].name)
             #enpassant
-            if piece.name=='p' and piece.color=='w' and (row+1,col)==enpassant_target:
+            elif piece.name=='p' and piece.color=='w' and (row+1,col)==enpassant_target:
                 enpassant=True
                 temp=board[row+1][col]
                 board[selected_piece[0]][selected_piece[1]] = ""
                 board[row+1][col] = ""
                 board[row][col] = piece
-            if piece.name=='p' and piece.color=='b' and (row-1,col)==enpassant_target:
+                cap=True
+            elif piece.name=='p' and piece.color=='b' and (row-1,col)==enpassant_target:
                 enpassant=True
                 temp=board[row-1][col]
                 board[selected_piece[0]][selected_piece[1]] = ""
                 board[row-1][col] = ""
                 board[row][col] = piece
+                cap=True
+            #for regular moves
+            else:
+                if board[row][col] != "":
+                    cap=True
+                else:
+                    cap=False
+                temp=board[row][col]
+                board[selected_piece[0]][selected_piece[1]] = ""
+                board[row][col] = piece
+            location=(row,col)
+            list_moves(piece,pos,location,cap,pro,ksc,qsc)
             if piece.name == "p" and abs(selected_piece[0] - row) == 2:
                 enpassant_target = (row, col)
-                print(enpassant_target)
             else:
                 enpassant_target = None
             #find position of king
@@ -446,9 +449,18 @@ def move_piece(row, col, en_passant_capture=False):
                             kc=j
         possible_threats()
         if threats[kr][kc]==1 and len(all_possible_moves())==0:
-            show_checkmate_screen()
+            if turn=='w':
+                string="Checkmate! Black wins!"
+            else:
+                string='Checkmate! White Wins!'
+            show_end_screen(string)
         elif threats[kr][kc]==0 and len(all_possible_moves())==0:
-            show_stalemate_screen()
+            show_end_screen('Stalemate. Draw!')
+        #CHECK FOR OTHER DRAW CONDITIONS
+        elif three_move_rep():
+            show_end_screen('Three move repetition. Draw!')
+        elif fifty_move():
+            show_end_screen('50 moves have passed with no progress. Draw!')
         #updates board
         window.fill((255, 255, 255))
         drawboard()
@@ -468,6 +480,63 @@ def handle_mouse_click(row, col):
         move_piece(row, col)
     else:
         print("Not your turn")
+    draw_move()
+    pygame.display.update()
+
+
+
+#PHASE 4: record moves of the game, draw conditions
+game=[]
+def list_moves(piece,pos,location,capture,promotion,ksc,qsc):
+    global game
+    notation=''
+    if piece.name=='p':
+        p=''
+    else:
+        p=piece.name.upper()
+    coordx=['a','b','c','d','e','f','g','h']
+    coordy=['8','7','6','5','4','3','2','1']
+    if capture:
+        if piece.name=='p':
+            p=coordx[pos]
+        notation=p+'x'+coordx[location[1]]+coordy[location[0]]
+    elif ksc:
+        notation='O-O'
+    elif qsc:
+        notation='O-O-O'
+    else:
+        notation=p+coordx[location[1]]+coordy[location[0]]
+    if promotion[0]==True:
+        notation+="="+promotion[1].upper()
+    game.append(notation)
+    draw_move()
+    pygame.display.update()
+def three_move_rep():      
+    return False
+counter=0
+def fifty_move():
+    global counter
+    return False
+def draw_move():
+    font = pygame.font.Font(None, 24)
+    text_color = (0, 0, 0)
+    x = 640
+    y = 15
+    move_text = font.render("White", True, text_color)
+    move_rect = move_text.get_rect(left=x + 10, top=10)
+    window.blit(move_text, move_rect)
+    move_text = font.render("Black", True, text_color)
+    move_rect = move_text.get_rect(left=x + 100, top=10)
+    window.blit(move_text, move_rect)
+    for i, move in enumerate(game):
+        if i%2==0:
+            move_text = font.render(f"{i//2 + 1}. {move}", True, text_color)
+            move_rect = move_text.get_rect(left=x + 10, top=y + 10 + i//2 * 20)
+        elif i%2==1:
+            move_text = font.render(f"{move}", True, text_color)
+            move_rect = move_text.get_rect(left=x + 100, top=y + 10 + i//2 * 20)
+        window.blit(move_text, move_rect)
+
 #Main game loop
 gameOn = True
 while gameOn:
@@ -478,7 +547,8 @@ while gameOn:
             if event.button == 1:
                 pos = pygame.mouse.get_pos()
                 row, col = get_row_col_from_mouse_pos(pos)
-                handle_mouse_click(row, col)
+                if row<=8 and col<=8:
+                    handle_mouse_click(row, col)
         if gameover:
             gameOn=False
 pygame.quit()
