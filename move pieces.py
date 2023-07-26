@@ -339,28 +339,29 @@ def move_piece(row, col):
     qsc=False
     pos=selected_piece[1]
     piece = board[selected_piece[0]][selected_piece[1]]
+    castling()
     if selected_piece:
         if (row, col) in posmoves:
             #castling
-            if turn=='w' and piece.name=='k' and row==7 and col==6:
+            if turn=='w' and piece.name=='k' and row==7 and col==6 and wkscastling:
                 board[7][4] = ""
                 board[7][6] = piece
                 board[7][7] = ""
                 board[7][5] = wr
                 ksc=True
-            elif turn=='w' and piece.name=='k' and row==7 and col==2:
+            elif turn=='w' and piece.name=='k' and row==7 and col==2 and wqscastling:
                 board[7][4] = ""
                 board[7][2] = piece
                 board[7][0] = ""
                 board[7][3] = wr
                 qsc=True
-            elif turn=='b' and piece.name=='k' and row==0 and col==6:
+            elif turn=='b' and piece.name=='k' and row==0 and col==6 and bkscastling:
                 board[0][4] = ""
                 board[0][6] = piece
                 board[0][7] = ""
                 board[0][5] = br
                 ksc=True
-            elif turn=='b' and piece.name=='k' and row==0 and col==2:
+            elif turn=='b' and piece.name=='k' and row==0 and col==2 and bqscastling:
                 board[0][4] = ""
                 board[0][2] = piece
                 board[0][0] = ""
