@@ -3,7 +3,10 @@
 import pygame
 from pygame.locals import *
 pygame.init()
-window = pygame.display.set_mode((840, 640))
+from chess_bot import ChessBot
+global dimension
+dimension=840
+window = pygame.display.set_mode((dimension, 640))
 window.fill((255, 255, 255))
 #create the pieces class
 class Piece:
@@ -203,6 +206,7 @@ def possible_threats():
                                     threats[r1][c1]=1
                                     r1+=dr
                                     c1+=dc
+    return threats
 #handles promotion
 def promotion(row,col):
     promoting=True
@@ -328,6 +332,7 @@ turnnum=1
 enpassant_target=None
 #Move the piece to the selected position
 def move_piece(row, col):
+    
     global selected_piece
     global turn
     global turnnum
@@ -408,6 +413,7 @@ def move_piece(row, col):
                 enpassant_target = (row, col)
             else:
                 enpassant_target = None
+            
             #find position of king
             for i in range(8):
                 for j in range(8):
@@ -462,6 +468,7 @@ def move_piece(row, col):
             show_end_screen('Three move repetition. Draw!')
         elif fifty_move():
             show_end_screen('50 moves have passed with no progress. Draw!')
+        
         #updates board
         window.fill((255, 255, 255))
         drawboard()
@@ -469,6 +476,8 @@ def move_piece(row, col):
 #Handle mouse clicks
 def handle_mouse_click(row, col):
     global selected_piece
+    global board
+    global turn
     piece = board[row][col]
     if piece != "" and piece.color==turn and selected_piece==None:
         selected_piece = (row, col)
@@ -477,13 +486,18 @@ def handle_mouse_click(row, col):
         posmoves.clear()
     elif piece=="" and selected_piece!=None:
         move_piece(row, col)
+
+            
+            
     elif piece!="" and piece.color!=turn and selected_piece!=None:
         move_piece(row, col)
+
+            
+            
     else:
         print("Not your turn")
     draw_move()
     pygame.display.update()
-
 
 
 #PHASE 4: record moves of the game, draw conditions
@@ -518,11 +532,13 @@ counter=0
 def fifty_move():
     global counter
     return False
+
+y = 15
 def draw_move():
+    x = 640
+    global y
     font = pygame.font.Font(None, 24)
     text_color = (0, 0, 0)
-    x = 640
-    y = 15
     move_text = font.render("White", True, text_color)
     move_rect = move_text.get_rect(left=x + 10, top=10)
     window.blit(move_text, move_rect)
@@ -530,6 +546,10 @@ def draw_move():
     move_rect = move_text.get_rect(left=x + 100, top=10)
     window.blit(move_text, move_rect)
     for i, move in enumerate(game):
+        if y>620:
+            dimension+=250
+            x=840
+            y=0
         if i%2==0:
             move_text = font.render(f"{i//2 + 1}. {move}", True, text_color)
             move_rect = move_text.get_rect(left=x + 10, top=y + 10 + i//2 * 20)
@@ -538,8 +558,11 @@ def draw_move():
             move_rect = move_text.get_rect(left=x + 100, top=y + 10 + i//2 * 20)
         window.blit(move_text, move_rect)
 
+
+
 #Main game loop
 gameOn = True
+bot_color='b'
 while gameOn:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -552,4 +575,11 @@ while gameOn:
                     handle_mouse_click(row, col)
         if gameover:
             gameOn=False
+            #bot moving code
+        if turn==bot_color:
+            bot=ChessBot(board,all_possible_moves(),possible_threats(),bot_color)
+            m=bot.generate_move()
+
+            handle_mouse_click(m[0],m[1])
+            handle_mouse_click(m[2],m[3])
 pygame.quit()
